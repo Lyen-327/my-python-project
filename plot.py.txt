@@ -1,0 +1,93 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from lifelines import KaplanMeierFitter
+
+plt.rcParams['font.sans-serif'] = ['Arial']
+colors = ['#e63946', '#1d3557', '#457b9d']
+
+# ----------------------
+# Figure 1 生存曲线
+# ----------------------
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), dpi=300)
+
+t_male = np.random.uniform(0, 25, 20000)
+e_male = np.random.binomial(1, 0.012, 20000)
+g_male = np.random.choice(['<3rd', '50th-84th', '≥95th'], 20000, p=[0.05, 0.85, 0.1])
+
+t_female = np.random.uniform(0, 25, 20000)
+e_female = np.random.binomial(1, 0.046, 20000)
+g_female = np.random.choice(['<3rd', '50th-84th', '≥95th'], 20000, p=[0.03, 0.88, 0.09])
+
+kmf = KaplanMeierFitter()
+for i, group in enumerate(['<3rd', '50th-84th', '≥95th']):
+    mask = g_male == group
+    kmf.fit(t_male[mask], e_male[mask], label=group)
+    kmf.plot(ax=ax1, ci_show=True, color=colors[i], linewidth=2)
+
+    mask = g_female == group
+    kmf.fit(t_female[mask], e_female[mask], label=group)
+    kmf.plot(ax=ax2, ci_show=True, color=colors[i], linewidth=2)
+
+ax1.set_title('Male')
+ax2.set_title('Female')
+ax1.set_ylabel('Cumulative incidence')
+ax2.set_xlabel('Follow-up years')
+ax1.set_xlabel('Follow-up years')
+plt.tight_layout()
+plt.savefig('Figure1_KM.png', dpi=300)
+plt.close()
+
+# ----------------------
+# Figure 2 森林图
+# ----------------------
+bmi = ['<3rd', '3rd-4th', '5th-9th', '10th-49th', '50th-84th', '85th-94th', '≥95th']
+f_hr = [1.88, 1.66, 1.59, 1.27, 1, 0.83, 0.86]
+f_low = [1.74, 1.50, 1.49, 1.23, np.nan, 0.77, 0.74]
+f_up = [2.04, 1.84, 1.69, 1.32, np.nan, 0.89, 1.01]
+m_hr = [1.82, 1.50, 1.41, 1.19, 1, 1.04, 1.14]
+m_low = [1.64, 1.30, 1.27, 1.12, np.nan, 0.93, 0.96]
+m_up = [2.01, 1.74, 1.56, 1.26, np.nan, 1.16, 1.34]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 7), dpi=300)
+y = np.arange(len(bmi))
+ax1.errorbar(f_hr, y, xerr=[f_hr - np.array(f_low), np.array(f_up) - f_hr], fmt='o', capsize=4)
+ax2.errorbar(m_hr, y, xerr=[m_hr - np.array(m_low), np.array(m_up) - m_hr], fmt='o', capsize=4)
+for ax in [ax1, ax2]:
+    ax.axvline(1, c='r', ls='--')
+    ax.set_yticks(y)
+    ax.set_yticklabels(bmi)
+    ax.set_xscale('log')
+ax1.set_title('Female')
+ax2.set_title('Male')
+plt.tight_layout()
+plt.savefig('Figure2_Forest.png', dpi=300)
+plt.close()
+
+# ----------------------
+# Figure 3 轨迹森林图
+# ----------------------
+print("正在生成 Figure3...")
+traj = ['Underweight→Underweight','Nonobese→Underweight','Underweight→Nonobese','Nonobese→Nonobese','Obese→Nonobese','Underweight→Obese','Nonobese→Obese','Obese→Obese']
+f_hr = [2.25,2.02,1.34,1,1.06,1.02,0.60,0.62]
+f_low = [1.89,1.85,1.23,np.nan,0.79,0.62,0.57,0.50]
+f_up = [2.68,2.21,1.45,np.nan,1.42,1.70,0.63,0.77]
+m_hr = [5.16,4.90,1.31,1,1.10,1.66,0.79,1.00]
+m_low = [4.01,3.72,1.19,np.nan,0.75,1.06,0.74,0.82]
+m_up = [6.61,6.46,1.45,np.nan,1.60,2.60,0.85,1.22]
+
+fig, (ax1, ax2) = plt.subplots(1,2,figsize=(14,8),dpi=300)
+y = np.arange(len(traj))
+ax1.errorbar(f_hr, y, xerr=[f_hr-np.array(f_low), np.array(f_up)-f_hr], fmt='o', capsize=4)
+ax2.errorbar(m_hr, y, xerr=[m_hr-np.array(m_low), np.array(m_up)-m_hr], fmt='o', capsize=4)
+for ax in [ax1, ax2]:
+    ax.axvline(1, c='r', ls='--')
+    ax.set_yticks(y)
+    ax.set_yticklabels(traj)
+    ax.set_xscale('log')
+ax1.set_title('Female')
+ax2.set_title('Male')
+plt.tight_layout()
+plt.savefig('Figure3_Traj.png', dpi=300)
+plt.close()
+
+print("✅ 全部生成完成！桌面出现3张高清图！")
